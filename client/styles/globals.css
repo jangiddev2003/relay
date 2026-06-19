@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #0F1320;
+  color: #E8E6F0;
+}
+
+* { box-sizing: border-box; }
+
+textarea:focus, input:focus, button:focus-visible {
+  outline: 2px solid #F2A93B;
+  outline-offset: 1px;
+}
