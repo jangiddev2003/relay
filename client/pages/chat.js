@@ -22,6 +22,8 @@ export default function Chat() {
     router.replace('/login');
   }
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   if (checking) {
     return <div className="min-h-screen bg-bg flex items-center justify-center text-muted">Loading…</div>;
   }
@@ -29,9 +31,39 @@ export default function Chat() {
   if (!userEmail) return null;
 
   return (
-    <div className="flex bg-bg min-h-screen">
-      <Sidebar activeBot={activeBot} onSelect={setActiveBot} userEmail={userEmail} onLogout={handleLogout} />
-      <ChatWindow botId={activeBot} />
+    <div className="flex bg-bg min-h-screen relative overflow-hidden">
+      {/* Sidebar Drawer (Responsive) */}
+      <div className={`
+        fixed inset-y-0 left-0 z-50 transform md:relative md:translate-x-0 transition-transform duration-300 ease-in-out shrink-0
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <Sidebar 
+          activeBot={activeBot} 
+          onSelect={(botId) => {
+            setActiveBot(botId);
+            setSidebarOpen(false);
+          }} 
+          userEmail={userEmail} 
+          onLogout={handleLogout}
+          onClose={() => setSidebarOpen(false)}
+        />
+      </div>
+
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          onClick={() => setSidebarOpen(false)} 
+          className="fixed inset-0 bg-black/60 z-40 md:hidden transition-opacity"
+        />
+      )}
+
+      {/* Main Chat Container */}
+      <div className="flex-1 flex flex-col min-w-0 h-screen">
+        <ChatWindow 
+          botId={activeBot} 
+          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        />
+      </div>
     </div>
   );
 }

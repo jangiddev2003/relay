@@ -39,6 +39,16 @@ function SendIcon({ className = 'w-4 h-4' }) {
   );
 }
 
+function MenuIcon({ className = 'w-5 h-5' }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  );
+}
+
 function PlusIcon({ className = 'w-3.5 h-3.5' }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -146,7 +156,7 @@ function BotCubeHero({ botId, code }) {
   );
 }
 
-export default function ChatWindow({ botId }) {
+export default function ChatWindow({ botId, onToggleSidebar }) {
   const [messages, setMessages] = useState([]);
   const [conversationId, setConversationId] = useState(null);
   const [input, setInput] = useState('');
@@ -284,16 +294,25 @@ export default function ChatWindow({ botId }) {
       <div className="flex-1 flex flex-col h-full min-w-0">
         <div className="px-6 py-4 border-b flex items-center justify-between border-blue-900/40">
           <div className="flex items-center gap-3">
+            {onToggleSidebar && (
+              <button
+                onClick={onToggleSidebar}
+                className="md:hidden text-muted hover:text-white p-1 -ml-1 mr-1 transition-colors"
+                title="Open menu"
+              >
+                <MenuIcon />
+              </button>
+            )}
             <div className="w-10 h-10 rounded-xl bg-coding-blue flex items-center justify-center text-white shadow-[0_0_20px_rgba(37,99,235,0.45)] font-mono text-xs font-bold shrink-0">
               {isCoding ? <CodingIcon /> : bot.code}
             </div>
             <div>
               <div className="font-semibold text-lg">{bot.name}</div>
-              <div className="text-xs text-muted">{bot.tagline}</div>
+              <div className="text-xs text-muted hidden sm:block">{bot.tagline}</div>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="text-xs font-mono uppercase text-signal flex items-center gap-1.5">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="text-xs font-mono uppercase text-signal hidden sm:flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-signal" /> Online
             </div>
             <button
@@ -301,7 +320,7 @@ export default function ChatWindow({ botId }) {
               title="Start a new chat"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-500/10 border border-blue-500/30 text-coding-glow hover:bg-blue-500/20 transition-all shadow-[0_0_12px_rgba(59,130,246,0.15)] shrink-0"
             >
-              <PlusIcon /> New Chat
+              <PlusIcon /> <span className="hidden sm:inline">New Chat</span>
             </button>
             <button
               onClick={() => setIsHistoryOpen(!isHistoryOpen)}
@@ -312,7 +331,7 @@ export default function ChatWindow({ botId }) {
                   : 'bg-blue-500/10 border-blue-500/30 text-coding-glow hover:bg-blue-500/20 shadow-[0_0_12px_rgba(59,130,246,0.15)]'
               }`}
             >
-              <HistoryIcon /> History
+              <HistoryIcon /> <span className="hidden sm:inline">History</span>
             </button>
           </div>
         </div>
@@ -365,7 +384,7 @@ export default function ChatWindow({ botId }) {
             </button>
           </div>
 
-          <div className="flex gap-2 mt-2.5">
+          <div className="flex flex-wrap gap-2 mt-2.5">
             <button
               onClick={() => exportAsPdf(bot.name, messages)}
               className="text-xs font-mono uppercase border rounded-full px-3 py-1.5 text-muted border-blue-900/50 bg-[#111827] hover:text-coding-glow hover:border-coding-blue/50"

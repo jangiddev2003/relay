@@ -30,27 +30,40 @@ function BotNavIcon({ code, active, isCoding }) {
   );
 }
 
-function RelayLogo() {
+function RelayLogo({ onClose }) {
   return (
-    <div className="flex items-center gap-2.5">
-      <div className="flex -space-x-1">
-        <span className="w-2.5 h-2.5 rounded-full bg-coding-blue shadow-[0_0_8px_rgba(37,99,235,0.8)]" />
-        <span className="w-2.5 h-2.5 rounded-full bg-coding-glow shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
-        <span className="w-2.5 h-2.5 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
+    <div className="flex items-center justify-between w-full">
+      <div className="flex items-center gap-2.5">
+        <div className="flex -space-x-1">
+          <span className="w-2.5 h-2.5 rounded-full bg-coding-blue shadow-[0_0_8px_rgba(37,99,235,0.8)]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-coding-glow shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
+        </div>
+        <div>
+          <div className="font-bold text-lg leading-tight">Relay</div>
+          <div className="text-muted text-[10px] uppercase tracking-widest mt-0.5">Multi-Bot Console</div>
+        </div>
       </div>
-      <div>
-        <div className="font-bold text-lg leading-tight">Relay</div>
-        <div className="text-muted text-[10px] uppercase tracking-widest mt-0.5">Multi-Bot Console</div>
-      </div>
+      {onClose && (
+        <button 
+          onClick={onClose} 
+          className="md:hidden text-muted hover:text-white p-1"
+          title="Close sidebar"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }
 
-export default function Sidebar({ activeBot, onSelect, userEmail, onLogout }) {
+export default function Sidebar({ activeBot, onSelect, userEmail, onLogout, onClose }) {
   return (
     <aside className="w-60 bg-panel border-r border-border flex flex-col h-screen">
       <div className="p-5 border-b border-border">
-        <RelayLogo />
+        <RelayLogo onClose={onClose} />
       </div>
 
       <div className="text-muted text-xs uppercase tracking-wide px-5 pt-4 pb-2">Channels</div>

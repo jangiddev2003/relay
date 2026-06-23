@@ -27,8 +27,9 @@ router.post('/signup', async (req, res) => {
     const hashed = await bcrypt.hash(password, 10);
     const user = await User.create({ email: email.toLowerCase(), password: hashed });
 
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
     setAuthCookie(res, user._id);
-    res.status(201).json({ email: user.email });
+    res.status(201).json({ email: user.email, token });
   } catch (err) {
     res.status(500).json({ error: 'Signup failed', details: err.message });
   }
@@ -45,8 +46,9 @@ router.post('/login', async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(401).json({ error: 'Invalid email or password' });
 
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
     setAuthCookie(res, user._id);
-    res.json({ email: user.email });
+    res.json({ email: user.email, token });
   } catch (err) {
     res.status(500).json({ error: 'Login failed', details: err.message });
   }
@@ -72,12 +74,16 @@ router.post('/logout', (req, res) => {
 router.get('/me', async (req, res) => {
   console.log('Cookies:', req.cookies);
 
-  const token = req.cookies.token;
+  let token = req.cookies.token;
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  }
 
   if (!token) {
     return res.status(401).json({
       error: 'Not logged in',
-      debug: 'No token cookie received'
+      debug: 'No token cookie or authorization header received'
     });
   }
 
