@@ -57,3 +57,73 @@ export function exportAsWord(botName, messages) {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+export async function exportAsZip(botName, messages) {
+  const JSZip = (await import('jszip')).default;
+  const zip = new JSZip();
+
+  let fileCount = 0;
+  messages.forEach((m, msgIndex) => {
+    const text = m.text;
+    const regex = /```(\w*)\n([\s\S]*?)\n```/g;
+    let match;
+    
+    while ((match = regex.exec(text)) !== null) {
+      fileCount++;
+      const lang = match[1] ? match[1].toLowerCase() : 'txt';
+      const code = match[2];
+      
+      let ext = lang;
+      if (lang === 'js' || lang === 'javascript') ext = 'js';
+      else if (lang === 'jsx' || lang === 'react') ext = 'jsx';
+      else if (lang === 'ts' || lang === 'typescript') ext = 'ts';
+      else if (lang === 'tsx') ext = 'tsx';
+      else if (lang === 'py' || lang === 'python') ext = 'py';
+      else if (lang === 'html' || lang === 'htm') ext = 'html';
+      else if (lang === 'css') ext = 'css';
+      else if (lang === 'sh' || lang === 'bash' || lang === 'shell') ext = 'sh';
+      else if (lang === 'json') ext = 'json';
+      else if (lang === 'md' || lang === 'markdown') ext = 'md';
+      else if (lang === 'go' || lang === 'golang') ext = 'go';
+      else if (lang === 'rs' || lang === 'rust') ext = 'rs';
+      else if (lang === 'cs' || lang === 'csharp') ext = 'cs';
+      else if (lang === 'cpp' || lang === 'c++') ext = 'cpp';
+      else if (lang === 'c') ext = 'c';
+      else if (lang === 'rb' || lang === 'ruby') ext = 'rb';
+      else if (lang === 'php') ext = 'php';
+      else if (lang === 'sql') ext = 'sql';
+      else if (lang === 'yaml' || lang === 'yml') ext = 'yml';
+      else if (lang === 'xml') ext = 'xml';
+      
+      const precedingText = text.substring(0, match.index);
+      const lines = precedingText.split('\n');
+      const lastFewLines = lines.slice(-3).join(' ');
+      
+      const fileMatch = /`([^`\s]+\.[a-zA-Z0-9]+)`/.exec(lastFewLines) || 
+                        /(\b[\w-]+\.[a-zA-Z0-9]+\b)/.exec(lastFewLines);
+                        
+      let filename = '';
+      if (fileMatch) {
+        filename = fileMatch[1].trim();
+        filename = filename.replace(/[\\/:*?"<>|]/g, '_');
+      } else {
+        filename = `code_block_${msgIndex + 1}_${fileCount}.${ext}`;
+      }
+      
+      zip.file(filename, code);
+    }
+  });
+
+  if (fileCount === 0) {
+    alert("No code blocks found in this conversation to export.");
+    return;
+  }
+
+  const content = await zip.generateAsync({ type: 'blob' });
+  const url = URL.createObjectURL(content);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${botName.toLowerCase()}-code-export.zip`;
+  a.click();
+  URL.revokeObjectURL(url);
+}

@@ -9,10 +9,11 @@ const messageSchema = new mongoose.Schema({
 const conversationSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   botType: { type: String, required: true },
+  title: { type: String },
   messages: [messageSchema],
   updatedAt: { type: Date, default: Date.now }
 });
 
-conversationSchema.index({ userId: 1, botType: 1 }, { unique: true });
+conversationSchema.index({ userId: 1, botType: 1, updatedAt: -1 });
 
 module.exports = mongoose.model('Conversation', conversationSchema);

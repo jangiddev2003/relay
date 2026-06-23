@@ -10,7 +10,12 @@ module.exports = {
         text: '#E8E6F0',
         muted: '#8A8FA8',
         accent: '#F2A93B',
-        signal: '#5FD0C0'
+        signal: '#5FD0C0',
+        coding: {
+          blue: '#2563EB',
+          glow: '#3B82F6',
+          panel: '#0A0F1A'
+        }
       }
     }
   },

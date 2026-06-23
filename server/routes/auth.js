@@ -57,16 +57,51 @@ router.post('/logout', (req, res) => {
   res.json({ message: 'Logged out' });
 });
 
+// router.get('/me', async (req, res) => {
+//   const token = req.cookies.token;
+//   if (!token) return res.status(401).json({ error: 'Not logged in' });
+//   try {
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//     const user = await User.findById(decoded.userId).select('email');
+//     if (!user) return res.status(401).json({ error: 'Not logged in' });
+//     res.json({ email: user.email });
+//   } catch {
+//     res.status(401).json({ error: 'Not logged in' });
+//   }
+// });
 router.get('/me', async (req, res) => {
+  console.log('Cookies:', req.cookies);
+
   const token = req.cookies.token;
-  if (!token) return res.status(401).json({ error: 'Not logged in' });
+
+  if (!token) {
+    return res.status(401).json({
+      error: 'Not logged in',
+      debug: 'No token cookie received'
+    });
+  }
+
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('Decoded:', decoded);
+
     const user = await User.findById(decoded.userId).select('email');
-    if (!user) return res.status(401).json({ error: 'Not logged in' });
+
+    if (!user) {
+      return res.status(401).json({
+        error: 'Not logged in',
+        debug: 'User not found'
+      });
+    }
+
     res.json({ email: user.email });
-  } catch {
-    res.status(401).json({ error: 'Not logged in' });
+  } catch (err) {
+    console.log('JWT ERROR:', err.message);
+
+    res.status(401).json({
+      error: 'Not logged in',
+      debug: err.message
+    });
   }
 });
 

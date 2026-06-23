@@ -9,7 +9,10 @@ const chatRoutes = require('./routes/chat');
 const app = express();
 connectDB();
 
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || 'http://localhost:3000', credentials: true }));
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -21,4 +24,6 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Relay server running on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () =>
+  console.log(`Relay server running on port ${PORT}`)
+);
