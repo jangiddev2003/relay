@@ -1,28 +1,14 @@
-const BOT_META = {
-  knowledge: { code: 'KN', name: 'Knowledge' },
-  reasoning: { code: 'RS', name: 'Reasoning' },
-  coding: { code: 'CD', name: 'Coding', icon: 'coding' },
-  maths: { code: 'MA', name: 'Maths' },
-  news: { code: 'NW', name: 'News' }
-};
+import Link from 'next/link';
 
-function BotNavIcon({ code, active, isCoding }) {
+function BotNavIcon({ code, active, isCustom }) {
   return (
     <span
       className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 text-xs font-mono font-bold ${
         active ? 'bg-white/15 text-white' : 'bg-coding-blue/15 text-coding-glow border border-coding-blue/30'
       }`}
     >
-      {isCoding ? (
-        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path
-            d="M8 7L3 12L8 17M16 7L21 12L16 17"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+      {isCustom ? (
+        <span className="text-[10px]">🤖</span>
       ) : (
         code
       )}
@@ -40,8 +26,8 @@ function RelayLogo({ onClose }) {
           <span className="w-2.5 h-2.5 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
         </div>
         <div>
-          <div className="font-bold text-lg leading-tight">Relay</div>
-          <div className="text-muted text-[10px] uppercase tracking-widest mt-0.5">Multi-Bot Console</div>
+          <div className="font-bold text-lg leading-tight text-text">Relay</div>
+          <div className="text-muted text-[10px] uppercase tracking-widest mt-0.5">AI Agent Platform</div>
         </div>
       </div>
       {onClose && (
@@ -59,39 +45,71 @@ function RelayLogo({ onClose }) {
   );
 }
 
-export default function Sidebar({ activeBot, onSelect, userEmail, onLogout, onClose }) {
+export default function Sidebar({ activeBot, customBots = [], onSelect, userEmail, onLogout, onClose }) {
   return (
     <aside className="w-60 bg-panel border-r border-border flex flex-col h-screen">
       <div className="p-5 border-b border-border">
         <RelayLogo onClose={onClose} />
       </div>
 
-      <div className="text-muted text-xs uppercase tracking-wide px-5 pt-4 pb-2">Channels</div>
-      <nav className="flex flex-col gap-1 px-3">
-        {Object.entries(BOT_META).map(([id, bot]) => {
-          const isActive = id === activeBot;
-          const isCoding = id === 'coding';
+      <div className="flex-1 overflow-y-auto py-4">
+        {/* Chats Section */}
+        <div className="text-muted text-xs uppercase tracking-wide px-5 pb-2">Chats</div>
+        <nav className="flex flex-col gap-1 px-3 mb-6">
+          <button
+            onClick={() => onSelect('routed')}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${
+              activeBot === 'routed'
+                ? 'bg-coding-blue text-white shadow-[0_0_20px_rgba(37,99,235,0.35)]'
+                : 'hover:bg-panel2 text-text'
+            }`}
+          >
+            <BotNavIcon code="RL" active={activeBot === 'routed'} isCustom={false} />
+            <span className="text-sm font-medium">Relay AI</span>
+          </button>
+        </nav>
 
-          return (
-            <button
-              key={id}
-              onClick={() => onSelect(id)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${
-                isActive
-                  ? 'bg-coding-blue text-white shadow-[0_0_20px_rgba(37,99,235,0.35)]'
-                  : 'hover:bg-panel2'
-              }`}
-            >
-              <BotNavIcon code={bot.code} active={isActive} isCoding={isCoding} />
-              <span className="text-sm">{bot.name}</span>
-            </button>
-          );
-        })}
-      </nav>
+        {/* My Bots Section */}
+        <div className="flex items-center justify-between px-5 pb-2">
+          <span className="text-muted text-xs uppercase tracking-wide">My Bots</span>
+          <Link href="/create-bot">
+            <span className="text-xs text-accent hover:text-white font-medium cursor-pointer transition-colors flex items-center gap-1">
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              New
+            </span>
+          </Link>
+        </div>
+        <nav className="flex flex-col gap-1 px-3">
+          {customBots.length === 0 ? (
+            <div className="text-muted text-xs px-5 py-2 italic">No custom bots yet.</div>
+          ) : (
+            customBots.map((bot) => {
+              const isActive = activeBot === bot._id;
+              return (
+                <button
+                  key={bot._id}
+                  onClick={() => onSelect(bot._id)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors truncate ${
+                    isActive
+                      ? 'bg-coding-blue text-white shadow-[0_0_20px_rgba(37,99,235,0.35)]'
+                      : 'hover:bg-panel2 text-text'
+                  }`}
+                >
+                  <BotNavIcon code="" active={isActive} isCustom={true} />
+                  <span className="text-sm font-medium truncate flex-1">{bot.name}</span>
+                </button>
+              );
+            })
+          )}
+        </nav>
+      </div>
 
       <div className="mt-auto p-4 border-t border-border text-xs text-muted">
         <div className="mb-2 truncate">{userEmail}</div>
-        <button onClick={onLogout} className="text-signal hover:underline">Log out</button>
+        <button onClick={onLogout} className="text-signal hover:underline font-medium">Log out</button>
       </div>
     </aside>
   );

@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const messageSchema = new mongoose.Schema({
   role: { type: String, enum: ['user', 'bot'], required: true },
   text: { type: String, required: true },
+  botCode: { type: String },
+  outOfScope: { type: Boolean },
   timestamp: { type: Date, default: Date.now }
 });
 

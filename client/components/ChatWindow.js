@@ -3,20 +3,6 @@ import apiFetch from '../lib/api';
 import MessageBubble from './MessageBubble';
 import { exportAsPdf, exportAsWord, exportAsZip } from '../lib/exportDoc';
 
-const BOT_META = {
-  knowledge: { code: 'KN', name: 'Knowledge', tagline: 'Ask anything, get a clear explanation' },
-  reasoning: { code: 'RS', name: 'Reasoning', tagline: 'Step-by-step thinking through a problem' },
-  coding: {
-    code: 'CD',
-    name: 'Coding',
-    tagline: 'Write and explain code',
-    emptyTitle: 'Start a conversation with Coding.',
-    emptySubtitle: 'Ask anything about code, algorithms, or debugging.'
-  },
-  maths: { code: 'MA', name: 'Maths', tagline: 'Solve equations and show the working' },
-  news: { code: 'NW', name: 'News', tagline: 'Summaries of real current headlines' }
-};
-
 function CodingIcon({ className = 'w-5 h-5' }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -105,7 +91,6 @@ function TrashIcon({ className = 'w-3.5 h-3.5' }) {
 }
 
 function BotCubeHero({ botId, code }) {
-  const isCoding = botId === 'coding';
   const cardRef = useRef(null);
   const [transformStyle, setTransformStyle] = useState('perspective(500px) rotateX(14deg) rotateY(-18deg) scale3d(1, 1, 1)');
 
@@ -119,11 +104,10 @@ function BotCubeHero({ botId, code }) {
       const x = e.clientX - centerX;
       const y = e.clientY - centerY;
 
-      // Normalize relative to viewport size
       const pctX = x / window.innerWidth;
       const pctY = y / window.innerHeight;
 
-      const maxTilt = 35; // Max degrees of tilt
+      const maxTilt = 35;
       const rotX = -pctY * maxTilt;
       const rotY = pctX * maxTilt;
 
@@ -149,14 +133,14 @@ function BotCubeHero({ botId, code }) {
       >
         <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-coding-glow/10 to-transparent" />
         <span className="relative text-coding-glow text-3xl font-bold font-mono drop-shadow-[0_0_16px_rgba(96,165,250,0.9)]">
-          {isCoding ? '</>' : code}
+          {code}
         </span>
       </div>
     </div>
   );
 }
 
-export default function ChatWindow({ botId, onToggleSidebar }) {
+export default function ChatWindow({ botId, customBots = [], onToggleSidebar }) {
   const [messages, setMessages] = useState([]);
   const [conversationId, setConversationId] = useState(null);
   const [input, setInput] = useState('');
@@ -167,13 +151,65 @@ export default function ChatWindow({ botId, onToggleSidebar }) {
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState('');
   const chatEndRef = useRef(null);
-  const bot = BOT_META[botId];
-  const isCoding = botId === 'coding';
+
+  const isRouted = botId === 'routed';
+
+  // Resolve current active bot metadata
+  let activeBotDetails = {
+    name: 'Relay AI',
+    code: 'RL',
+    tagline: 'AI assistant that automatically routes your queries to the right specialist.',
+    welcomeTitle: 'Relay AI',
+    welcomeSubtitle: 'The platform automatically routes questions to the most suitable AI specialist and allows users to build their own custom AI assistants.'
+  };
+
+  if (!isRouted) {
+    const customBot = customBots.find(b => b._id === botId);
+    if (customBot) {
+      activeBotDetails = {
+        name: customBot.name,
+        code: '🤖',
+        tagline: customBot.description || 'Custom AI Assistant',
+        welcomeTitle: `Welcome to ${customBot.name}`,
+        welcomeSubtitle: customBot.description || `Specialized AI bot with personality "${customBot.personality}"`
+      };
+    } else {
+      activeBotDetails = {
+        name: 'Loading Bot...',
+        code: '🤖',
+        tagline: 'Please wait...',
+        welcomeTitle: 'Welcome',
+        welcomeSubtitle: ''
+      };
+    }
+  }
+
+  // Get matching endpoints for the selected bot
+  function getBotEndpoints() {
+    if (isRouted) {
+      return {
+        chat: '/api/chat/routed',
+        history: '/api/chat/routed/history',
+        rename: (id) => `/api/chat/routed/${id}`,
+        delete: (id) => `/api/chat/routed/${id}`
+      };
+    } else {
+      return {
+        chat: `/api/custom-bot/${botId}/chat`,
+        history: `/api/custom-bot/${botId}/history`,
+        rename: (id) => `/api/custom-bot/${botId}/${id}`,
+        delete: (id) => `/api/custom-bot/${botId}/${id}`
+      };
+    }
+  }
+
+  const endpoints = getBotEndpoints();
 
   useEffect(() => {
     setError('');
     setConversationId(null);
-    apiFetch(`/api/chat/${botId}`)
+    setMessages([]);
+    apiFetch(endpoints.chat)
       .then(data => {
         setConversationId(data.conversationId);
         setMessages(data.messages || []);
@@ -193,7 +229,7 @@ export default function ChatWindow({ botId, onToggleSidebar }) {
 
   async function fetchHistory() {
     try {
-      const data = await apiFetch(`/api/chat/${botId}/history`);
+      const data = await apiFetch(endpoints.history);
       setHistory(data.history || []);
     } catch (err) {
       console.error("Failed to fetch history:", err);
@@ -209,7 +245,7 @@ export default function ChatWindow({ botId, onToggleSidebar }) {
     setInput('');
 
     try {
-      const data = await apiFetch(`/api/chat/${botId}`, {
+      const data = await apiFetch(endpoints.chat, {
         method: 'POST',
         body: JSON.stringify({ message: text, conversationId })
       });
@@ -238,7 +274,7 @@ export default function ChatWindow({ botId, onToggleSidebar }) {
   async function handleLoadConversation(convoId) {
     setError('');
     try {
-      const data = await apiFetch(`/api/chat/${botId}?conversationId=${convoId}`);
+      const data = await apiFetch(`${endpoints.chat}?conversationId=${convoId}`);
       setConversationId(convoId);
       setMessages(data.messages || []);
     } catch (err) {
@@ -254,7 +290,7 @@ export default function ChatWindow({ botId, onToggleSidebar }) {
   async function handleSaveRename(id) {
     if (!editTitle.trim()) return;
     try {
-      await apiFetch(`/api/chat/${botId}/${id}`, {
+      await apiFetch(endpoints.rename(id), {
         method: 'PUT',
         body: JSON.stringify({ title: editTitle })
       });
@@ -276,7 +312,7 @@ export default function ChatWindow({ botId, onToggleSidebar }) {
   async function handleDeleteConversation(id) {
     if (!confirm("Are you sure you want to delete this chat conversation?")) return;
     try {
-      await apiFetch(`/api/chat/${botId}/${id}`, {
+      await apiFetch(endpoints.delete(id), {
         method: 'DELETE'
       });
       if (conversationId === id) {
@@ -286,6 +322,35 @@ export default function ChatWindow({ botId, onToggleSidebar }) {
     } catch (err) {
       alert("Failed to delete conversation: " + err.message);
     }
+  }
+
+  // Determine Badge Next to the Bot Name
+  const botMessages = messages.filter(m => m.role === 'bot');
+  const lastBotMsg = botMessages.length > 0 ? botMessages[botMessages.length - 1] : null;
+
+  let badgeText = '';
+  let badgeColor = '';
+
+  if (lastBotMsg && lastBotMsg.outOfScope) {
+    badgeText = '⚠ Outside Specialty';
+    badgeColor = 'bg-red-500/10 border-red-500/30 text-red-400';
+  } else if (isRouted) {
+    if (lastBotMsg && lastBotMsg.botCode) {
+      const codeMap = {
+        KN: 'Knowledge Specialist',
+        RS: 'Reasoning Specialist',
+        CD: 'Coding Specialist',
+        MA: 'Maths Specialist',
+        NW: 'News Specialist'
+      };
+      badgeText = codeMap[lastBotMsg.botCode] || 'Relay Router';
+    } else {
+      badgeText = 'Relay Router';
+    }
+    badgeColor = 'bg-signal/15 border-signal/30 text-signal';
+  } else {
+    badgeText = `🟢 ${activeBotDetails.name}`;
+    badgeColor = 'bg-signal/15 border-signal/30 text-signal';
   }
 
   return (
@@ -304,15 +369,20 @@ export default function ChatWindow({ botId, onToggleSidebar }) {
               </button>
             )}
             <div className="w-10 h-10 rounded-xl bg-coding-blue flex items-center justify-center text-white shadow-[0_0_20px_rgba(37,99,235,0.45)] font-mono text-xs font-bold shrink-0">
-              {isCoding ? <CodingIcon /> : bot.code}
+              {activeBotDetails.code}
             </div>
             <div>
-              <div className="font-semibold text-lg">{bot.name}</div>
-              <div className="text-xs text-muted hidden sm:block">{bot.tagline}</div>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-lg text-text">{activeBotDetails.name}</span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${badgeColor}`}>
+                  {badgeText}
+                </span>
+              </div>
+              <div className="text-xs text-muted hidden sm:block">{activeBotDetails.tagline}</div>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
-            <div className="text-xs font-mono uppercase text-signal hidden sm:flex items-center gap-1.5">
+            <div className="text-xs font-mono uppercase text-signal hidden sm:flex items-center gap-1.5 font-semibold">
               <span className="w-1.5 h-1.5 rounded-full bg-signal" /> Online
             </div>
             <button
@@ -339,12 +409,12 @@ export default function ChatWindow({ botId, onToggleSidebar }) {
         <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-4">
           {messages.length === 0 && !error && (
             <div className="m-auto text-center max-w-lg">
-              <BotCubeHero botId={botId} code={bot.code} />
-              <h2 className="text-2xl font-semibold mb-2">
-                {isCoding ? bot.emptyTitle : `Start a conversation with ${bot.name}.`}
+              <BotCubeHero botId={botId} code={activeBotDetails.code} />
+              <h2 className="text-2xl font-semibold mb-2 text-text">
+                {activeBotDetails.welcomeTitle}
               </h2>
-              <p className="text-muted">
-                {isCoding ? bot.emptySubtitle : bot.tagline}
+              <p className="text-muted text-sm leading-relaxed">
+                {activeBotDetails.welcomeSubtitle}
               </p>
             </div>
           )}
@@ -354,12 +424,12 @@ export default function ChatWindow({ botId, onToggleSidebar }) {
               key={i}
               role={m.role}
               text={m.text}
-              botCode={bot.code}
-              variant="coding"
+              botCode={m.botCode}
+              variant={isRouted ? 'routed' : 'custom'}
             />
           ))}
           {sending && (
-            <div className="text-muted text-xs font-mono">{bot.name} is typing…</div>
+            <div className="text-muted text-xs font-mono">{activeBotDetails.name} is typing…</div>
           )}
           <div ref={chatEndRef} />
         </div>
@@ -368,8 +438,8 @@ export default function ChatWindow({ botId, onToggleSidebar }) {
           <div className="flex gap-2 items-end">
             <textarea
               rows={1}
-              className="flex-1 border rounded-xl px-4 py-3 text-sm resize-none min-h-[44px] bg-[#111827] border-blue-900/50 placeholder:text-muted/70 focus:border-coding-blue/60"
-              placeholder={`Message the ${bot.name} bot…`}
+              className="flex-1 border rounded-xl px-4 py-3 text-sm resize-none min-h-[44px] bg-[#111827] border-blue-900/50 placeholder:text-muted/70 focus:border-coding-blue/60 text-text"
+              placeholder={`Message ${activeBotDetails.name}…`}
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -386,20 +456,20 @@ export default function ChatWindow({ botId, onToggleSidebar }) {
 
           <div className="flex flex-wrap gap-2 mt-2.5">
             <button
-              onClick={() => exportAsPdf(bot.name, messages)}
+              onClick={() => exportAsPdf(activeBotDetails.name, messages)}
               className="text-xs font-mono uppercase border rounded-full px-3 py-1.5 text-muted border-blue-900/50 bg-[#111827] hover:text-coding-glow hover:border-coding-blue/50"
             >
               Export - PDF
             </button>
             <button
-              onClick={() => exportAsWord(bot.name, messages)}
+              onClick={() => exportAsWord(activeBotDetails.name, messages)}
               className="text-xs font-mono uppercase border rounded-full px-3 py-1.5 text-muted border-blue-900/50 bg-[#111827] hover:text-coding-glow hover:border-coding-blue/50"
             >
               Export - Word
             </button>
-            {isCoding && (
+            {!isRouted && (
               <button
-                onClick={() => exportAsZip(bot.name, messages)}
+                onClick={() => exportAsZip(activeBotDetails.name, messages)}
                 className="text-xs font-mono uppercase border rounded-full px-3 py-1.5 text-muted border-blue-900/50 bg-[#111827] hover:text-coding-glow hover:border-coding-blue/50"
               >
                 Export - ZIP
@@ -450,7 +520,7 @@ export default function ChatWindow({ botId, onToggleSidebar }) {
                         autoFocus
                       />
                     ) : (
-                      <span className="font-medium truncate block w-full">{item.title}</span>
+                      <span className="font-medium truncate block w-full text-text">{item.title}</span>
                     )}
                     <span className="text-[10px] text-muted/60">{new Date(item.updatedAt).toLocaleString()}</span>
                   </div>
