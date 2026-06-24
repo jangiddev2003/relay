@@ -5,7 +5,8 @@ import Sidebar from '../components/Sidebar';
 import ChatWindow from '../components/ChatWindow';
 
 export default function Chat() {
-  const [activeBot, setActiveBot] = useState('knowledge');
+  const [activeBot, setActiveBot] = useState('routed');
+  const [customBots, setCustomBots] = useState([]);
   const [userEmail, setUserEmail] = useState(null);
   const [checking, setChecking] = useState(true);
   const router = useRouter();
@@ -16,6 +17,21 @@ export default function Chat() {
       .catch(() => router.replace('/login'))
       .finally(() => setChecking(false));
   }, [router]);
+
+  useEffect(() => {
+    if (userEmail) {
+      apiFetch('/api/custom-bot')
+        .then(data => setCustomBots(data.bots || []))
+        .catch(err => console.error("Failed to load custom bots", err));
+    }
+  }, [userEmail]);
+
+  useEffect(() => {
+    if (router.query.selectBot) {
+      setActiveBot(router.query.selectBot);
+      router.replace('/chat', undefined, { shallow: true });
+    }
+  }, [router.query.selectBot]);
 
   async function handleLogout() {
     await apiFetch('/api/auth/logout', { method: 'POST' });
@@ -39,6 +55,7 @@ export default function Chat() {
       `}>
         <Sidebar 
           activeBot={activeBot} 
+          customBots={customBots}
           onSelect={(botId) => {
             setActiveBot(botId);
             setSidebarOpen(false);
@@ -61,6 +78,7 @@ export default function Chat() {
       <div className="flex-1 flex flex-col min-w-0 h-screen">
         <ChatWindow 
           botId={activeBot} 
+          customBots={customBots}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         />
       </div>

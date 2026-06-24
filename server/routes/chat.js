@@ -80,18 +80,48 @@ router.post('/:botType', chatRateLimiter, async (req, res) => {
 
     convo.messages.push({ role: 'user', text: message });
 
+    let selectedBotType = botType;
+    let selectedBot = bot;
+    let isRouted = botType === 'routed';
+    let matchedCategory = bot.code;
+
+    if (isRouted) {
+      const classificationPrompt = `You are an intent router for an AI assistant platform.
+Your job is to classify the user's message into exactly one of these five categories:
+- knowledge: General knowledge, explanations of concepts, history, science, etc.
+- reasoning: Complex logical puzzles, step-by-step reasoning problems, planning, decision-making.
+- coding: Writing code, debugging, explaining code, algorithms.
+- maths: Solving mathematical equations, calculus, arithmetic, word problems.
+- news: Current events, latest updates, headlines.
+
+Response format: Respond with ONLY the category name in lowercase: knowledge, reasoning, coding, maths, or news. Do not include any other text, explanation, or punctuation.`;
+
+      const categoryResponse = await getAIResponse(classificationPrompt, message);
+      const category = categoryResponse.trim().toLowerCase();
+
+      if (['knowledge', 'reasoning', 'coding', 'maths', 'news'].includes(category)) {
+        selectedBotType = category;
+        selectedBot = BOTS[category];
+        matchedCategory = selectedBot.code;
+      } else {
+        selectedBotType = 'knowledge';
+        selectedBot = BOTS['knowledge'];
+        matchedCategory = selectedBot.code;
+      }
+    }
+
     let replyText;
-    if (botType === 'news') {
+    if (selectedBotType === 'news') {
       const headlines = await getTopHeadlines();
       replyText = await getAIResponse(
-        bot.systemPrompt,
+        selectedBot.systemPrompt,
         `Here are the current headlines:\n${headlines}\n\nUser request: ${message}`
       );
     } else {
-      replyText = await getAIResponse(bot.systemPrompt, message);
+      replyText = await getAIResponse(selectedBot.systemPrompt, message);
     }
 
-    convo.messages.push({ role: 'bot', text: replyText });
+    convo.messages.push({ role: 'bot', text: replyText, botCode: matchedCategory });
     convo.updatedAt = new Date();
     await convo.save();
 
