@@ -337,13 +337,19 @@ export default function ChatWindow({ botId, customBots = [], onToggleSidebar }) 
   } else if (isRouted) {
     if (lastBotMsg && lastBotMsg.botCode) {
       const codeMap = {
-        KN: 'Knowledge Specialist',
-        RS: 'Reasoning Specialist',
-        CD: 'Coding Specialist',
-        MA: 'Maths Specialist',
-        NW: 'News Specialist'
+        kn: 'Knowledge Specialist',
+        knowledge: 'Knowledge Specialist',
+        rs: 'Reasoning Specialist',
+        reasoning: 'Reasoning Specialist',
+        cd: 'Coding Specialist',
+        coding: 'Coding Specialist',
+        ma: 'Maths Specialist',
+        maths: 'Maths Specialist',
+        nw: 'News Specialist',
+        news: 'News Specialist'
       };
-      badgeText = codeMap[lastBotMsg.botCode] || 'Relay Router';
+      const cleanCode = String(lastBotMsg.botCode).trim().toLowerCase();
+      badgeText = codeMap[cleanCode] || 'Relay Router';
     } else {
       badgeText = 'Relay Router';
     }
