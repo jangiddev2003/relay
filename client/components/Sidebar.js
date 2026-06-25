@@ -45,7 +45,7 @@ function RelayLogo({ onClose }) {
   );
 }
 
-export default function Sidebar({ activeBot, customBots = [], onSelect, userEmail, onLogout, onClose }) {
+export default function Sidebar({ activeBot, customBots = [], onSelect, onDeleteBot, userEmail, onLogout, onClose }) {
   return (
     <aside className="w-60 bg-panel border-r border-border flex flex-col h-screen">
       <div className="p-5 border-b border-border">
@@ -89,18 +89,38 @@ export default function Sidebar({ activeBot, customBots = [], onSelect, userEmai
             customBots.map((bot) => {
               const isActive = activeBot === bot._id;
               return (
-                <button
+                <div
                   key={bot._id}
-                  onClick={() => onSelect(bot._id)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors truncate ${
+                  className={`group relative flex items-center justify-between w-full rounded-xl transition-colors ${
                     isActive
                       ? 'bg-coding-blue text-white shadow-[0_0_20px_rgba(37,99,235,0.35)]'
                       : 'hover:bg-panel2 text-text'
                   }`}
                 >
-                  <BotNavIcon code="" active={isActive} isCustom={true} />
-                  <span className="text-sm font-medium truncate flex-1">{bot.name}</span>
-                </button>
+                  <button
+                    onClick={() => onSelect(bot._id)}
+                    className="flex items-center gap-3 px-3 py-2.5 text-left flex-1 min-w-0"
+                  >
+                    <BotNavIcon code="" active={isActive} isCustom={true} />
+                    <span className="text-sm font-medium truncate">{bot.name}</span>
+                  </button>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteBot(bot._id, bot.name);
+                    }}
+                    title={`Delete ${bot.name}`}
+                    className={`mr-3 p-1 rounded-md text-muted hover:text-red-400 hover:bg-black/20 opacity-60 hover:opacity-100 transition-all shrink-0 ${
+                      isActive ? 'text-white/60 hover:text-white hover:bg-white/10' : ''
+                    }`}
+                  >
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                  </button>
+                </div>
               );
             })
           )}

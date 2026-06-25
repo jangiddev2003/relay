@@ -33,6 +33,23 @@ export default function Chat() {
     }
   }, [router.query.selectBot]);
 
+  async function handleDeleteBot(botId, botName) {
+    if (!confirm(`Are you sure you want to delete the bot "${botName}"? This will permanently delete the bot and all associated chat history.`)) {
+      return;
+    }
+
+    try {
+      await apiFetch(`/api/custom-bot/${botId}`, { method: 'DELETE' });
+      const data = await apiFetch('/api/custom-bot');
+      setCustomBots(data.bots || []);
+      if (activeBot === botId) {
+        setActiveBot('routed');
+      }
+    } catch (err) {
+      alert("Failed to delete bot: " + err.message);
+    }
+  }
+
   async function handleLogout() {
     await apiFetch('/api/auth/logout', { method: 'POST' });
     router.replace('/login');
@@ -60,6 +77,7 @@ export default function Chat() {
             setActiveBot(botId);
             setSidebarOpen(false);
           }} 
+          onDeleteBot={handleDeleteBot}
           userEmail={userEmail} 
           onLogout={handleLogout}
           onClose={() => setSidebarOpen(false)}
