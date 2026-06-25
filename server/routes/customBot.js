@@ -344,4 +344,23 @@ router.delete('/:botId/:conversationId', async (req, res) => {
   }
 });
 
+// Delete custom bot (and all its conversations)
+router.delete('/:botId', async (req, res) => {
+  const { botId } = req.params;
+  try {
+    const botResult = await CustomBot.deleteOne({ _id: botId, userId: req.userId });
+    if (botResult.deletedCount === 0) {
+      return res.status(404).json({ error: 'Bot not found' });
+    }
+
+    // Cascading delete for conversations associated with this custom bot
+    const dbBotType = `custom_${botId}`;
+    await Conversation.deleteMany({ userId: req.userId, botType: dbBotType });
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
