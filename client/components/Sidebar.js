@@ -111,7 +111,7 @@ export default function Sidebar({ activeBot, customBots = [], onSelect, onDelete
                       onDeleteBot(bot._id, bot.name);
                     }}
                     title={`Delete ${bot.name}`}
-                    className={`mr-3 p-1 rounded-md text-muted hover:text-red-400 hover:bg-black/20 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all shrink-0 ${
+                    className={`mr-3 p-1 rounded-md text-muted hover:text-red-400 hover:bg-black/20 opacity-60 hover:opacity-100 transition-all shrink-0 ${
                       isActive ? 'text-white/60 hover:text-white hover:bg-white/10' : ''
                     }`}
                   >
